@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "super-resolution-pwr-2022"
+version = "0.1.0"
+description = ""
+authors = ["Jakub Ciszek <jakubciszek64@gmail.com>", "Jakub Brzoza", "Łukasz Siemański"]
+
+[tool.poetry.dependencies]
+python = "^3.9.9"
+torch = "^1.11.0"
+pytorch-lightning = "^1.5.10"
+torchmetrics = "^0.7.3"
+torchvision = "^0.12.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
