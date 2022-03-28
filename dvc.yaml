@@ -1,0 +1,11 @@
+vars:
+  - super_resolution/params.py:DataConfig
+
+stages:
+  unpack:
+    cmd: python -m super_resolution.preprocessing.unpack
+    deps:
+      - ${DataConfig.raw_data}
+    outs:
+      - ${DataConfig.unpacked_data}:
+          cache: false

@@ -1,0 +1,13 @@
+schema: '2.0'
+stages:
+  unpack:
+    cmd: python -m super_resolution.preprocessing.unpack
+    deps:
+    - path: data/raw.tar.gz
+      md5: d4e9d15f73c456e6f8ade8f17e001f2e
+      size: 821155541
+    outs:
+    - path: data/unpacked
+      md5: b2c461b1b0bcb7a0a2318d5be1f13758.dir
+      size: 866190740
+      nfiles: 25002
