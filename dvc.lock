@@ -24,8 +24,8 @@ stages:
         DataConfig.target_width: 240
     outs:
     - path: data/processed_cats.pkl
-      md5: 4c285fcb1e7949e80caf1a6a551f966c
-      size: 2161900379
+      md5: 46ce78795e021f3445413c85f7daf79c
+      size: 2047104168
     - path: data/processed_dogs.pkl
-      md5: 2354966554a8ca879bec6fcdd51f1d5c
-      size: 2162130779
+      md5: 4faf606984b04c6a72d2b22e3508dd89
+      size: 2047104168

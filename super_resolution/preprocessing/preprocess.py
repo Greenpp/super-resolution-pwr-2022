@@ -10,8 +10,8 @@ from ..config import DataConfig
 
 def fit_image(img: Image.Image) -> Image.Image:
     """Scale an image to the target size."""
-    height, width = img.size
-    if height > width:
+    width, height = img.size
+    if width > height:
         new_height = DataConfig.target_height
         new_width = int(width * (new_height / height))
     else:
@@ -36,8 +36,13 @@ def load_paths(path: Path) -> list[Path]:
 
 def is_too_small(img: Image.Image) -> bool:
     """Check if an image is too small."""
-    height, width = img.size
+    width, height = img.size
     return height < DataConfig.target_height or width < DataConfig.target_width
+
+
+def is_gray(img: Image.Image) -> bool:
+    """Check if an image is grayscale."""
+    return len(img.getbands()) == 1
 
 
 def equalize_sets(*data_sets: list[np.ndarray]) -> list[list[np.ndarray]]:
@@ -46,44 +51,47 @@ def equalize_sets(*data_sets: list[np.ndarray]) -> list[list[np.ndarray]]:
     return [data_set[:min_len] for data_set in data_sets]
 
 
+def process_paths(paths: list[Path]) -> list[np.ndarray]:
+    """Load, filter and process images."""
+    images = []
+    for path in tqdm(paths):
+        try:
+            img = Image.open(path)
+            if is_too_small(img):
+                continue
+            if is_gray(img):
+                continue
+            img = np.array(fit_image(img))
+            if img.shape != (DataConfig.target_height, DataConfig.target_width, 3):
+                raise ValueError(f"Image {path} has shape {img.shape}")
+            images.append(img.transpose(2, 0, 1))
+        except Exception as e:
+            print(f"Path: {path} | Error: {e}")
+    return images
+
+
 def main() -> None:
     """Load images, filter out too small images, scale and save rest."""
     cat_paths = load_paths(Path("data/unpacked/Cat"))
     dog_paths = load_paths(Path("data/unpacked/Dog"))
     print(f"Got {len(cat_paths)} cat paths and {len(dog_paths)} dog paths.")
 
-    cat_images = []
-    dog_images = []
-    for path in tqdm(cat_paths):
-        try:
-            img = Image.open(path)
-            if is_too_small(img):
-                continue
-            cat_images.append(np.array(fit_image(img)))
-        except Exception as e:
-            print(f"Path: {path} | Error: {e}")
+    print("Processing cat images...")
+    cat_images = process_paths(cat_paths)
+    print(f"Got {len(cat_images)} cat images.")
+    print("Processing dog images...")
+    dog_images = process_paths(dog_paths)
+    print(f"Got {len(dog_images)} dog images.")
 
-    for path in tqdm(dog_paths):
-        try:
-            img = Image.open(path)
-            if is_too_small(img):
-                continue
-            dog_images.append(np.array(fit_image(img)))
-        except Exception as e:
-            print(f"Path: {path} | Error: {e}")
-
-    print(
-        f"Got {len(cat_images)} cat images and {len(dog_images)} dog images after filtering."
-    )
     equalized_cats, equalized_dogs = equalize_sets(cat_images, dog_images)
     print(
         f"Equalized to {len(equalized_cats)} cat images and {len(equalized_dogs)} dog images."
     )
 
     with open(DataConfig.processed_cats, "wb") as f:
-        pkl.dump(equalized_cats, f)
+        pkl.dump(np.stack(equalized_cats), f)
     with open(DataConfig.processed_dogs, "wb") as f:
-        pkl.dump(equalized_dogs, f)
+        pkl.dump(np.stack(equalized_dogs), f)
 
 
 if __name__ == "__main__":
