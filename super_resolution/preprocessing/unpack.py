@@ -1,6 +1,6 @@
 import tarfile
 
-from ..params import DataConfig
+from ..config import DataConfig
 
 
 def unpack_file(file_path: str, destination_path: str) -> None:

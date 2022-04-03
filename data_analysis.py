@@ -44,10 +44,10 @@ print(f"Loaded total of {len(all_sizes)} images.")
 # %%
 # plot heights and widths
 bins = 25
-sns.histplot(sizes_arr[:, 0], bins=bins)
+sns.histplot(sizes_arr[:, 0], bins=bins)  # type: ignore
 plt.title("Distribution of Image Heights")
 plt.show()
-sns.histplot(sizes_arr[:, 1], bins=bins)
+sns.histplot(sizes_arr[:, 1], bins=bins)  # type: ignore
 plt.title("Distribution of Image Widths")
 plt.show()
 
