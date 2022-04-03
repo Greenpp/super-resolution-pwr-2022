@@ -11,3 +11,18 @@ stages:
       md5: b2c461b1b0bcb7a0a2318d5be1f13758.dir
       size: 866190740
       nfiles: 25002
+  preprocess:
+    cmd: python -m super_resolution.preprocessing.preprocess
+    deps:
+    - path: data/unpacked
+      md5: b2c461b1b0bcb7a0a2318d5be1f13758.dir
+      size: 866190740
+      nfiles: 25002
+    params:
+      super_resolution/config.py:
+        DataConfig.target_height: 320
+        DataConfig.target_width: 240
+    outs:
+    - path: data/processed.pkl
+      md5: 38e3db124e5e22d0673b5537bb5183a2
+      size: 4324031059

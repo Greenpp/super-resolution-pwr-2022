@@ -1,5 +1,5 @@
 vars:
-  - super_resolution/params.py:DataConfig
+  - super_resolution/config.py:DataConfig
 
 stages:
   unpack:
@@ -9,3 +9,13 @@ stages:
     outs:
       - ${DataConfig.unpacked_data}:
           cache: false
+  preprocess:
+    cmd: python -m super_resolution.preprocessing.preprocess
+    deps:
+      - ${DataConfig.unpacked_data}
+    outs:
+      - ${DataConfig.processed_data}
+    params:
+      - super_resolution/config.py:
+          - DataConfig.target_width
+          - DataConfig.target_height

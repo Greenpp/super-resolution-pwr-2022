@@ -3,7 +3,7 @@
 ## How to get data
 
 ```sh
-dvc repro
+dvc repro --pull
 ```
 
 ## How to contribute
