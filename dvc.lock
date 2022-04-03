@@ -23,6 +23,9 @@ stages:
         DataConfig.target_height: 320
         DataConfig.target_width: 240
     outs:
-    - path: data/processed.pkl
-      md5: 38e3db124e5e22d0673b5537bb5183a2
-      size: 4324031059
+    - path: data/processed_cats.pkl
+      md5: 4c285fcb1e7949e80caf1a6a551f966c
+      size: 2161900379
+    - path: data/processed_dogs.pkl
+      md5: 2354966554a8ca879bec6fcdd51f1d5c
+      size: 2162130779

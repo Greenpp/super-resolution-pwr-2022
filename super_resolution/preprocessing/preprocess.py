@@ -80,8 +80,10 @@ def main() -> None:
         f"Equalized to {len(equalized_cats)} cat images and {len(equalized_dogs)} dog images."
     )
 
-    with open(DataConfig.processed_data, "wb") as f:
-        pkl.dump({"cats": equalized_cats, "dogs": equalized_dogs}, f)
+    with open(DataConfig.processed_cats, "wb") as f:
+        pkl.dump(equalized_cats, f)
+    with open(DataConfig.processed_dogs, "wb") as f:
+        pkl.dump(equalized_dogs, f)
 
 
 if __name__ == "__main__":

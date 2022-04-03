@@ -14,7 +14,8 @@ stages:
     deps:
       - ${DataConfig.unpacked_data}
     outs:
-      - ${DataConfig.processed_data}
+      - ${DataConfig.processed_cats}
+      - ${DataConfig.processed_dogs}
     params:
       - super_resolution/config.py:
           - DataConfig.target_width
