@@ -23,33 +23,52 @@ class ImageDataset(Dataset):
 class DataClass(enum.Enum):
     DOG = enum.auto()
     CAT = enum.auto()
+    MIX = enum.auto()
 
 
-class SingleClassModule(LightningDataModule):
-    def __init__(self, class_name: DataClass):
+class ImageModule(LightningDataModule):
+    def __init__(self, train_class: DataClass, val_class: DataClass) -> None:
         super().__init__()
-        self.class_name = class_name
+        self.train_class = train_class
+        self.val_class = val_class
 
     def prepare_data(self):
         print("Loading data...")
-        if self.class_name is DataClass.DOG:
-            with open(DataConfig.processed_dogs, "rb") as f:
-                targets = torch.tensor(pkl.load(f))
-        elif self.class_name is DataClass.CAT:
-            with open(DataConfig.processed_cats, "rb") as f:
-                targets = torch.tensor(pkl.load(f))
-        else:
-            raise ValueError(f"Unknown class name: {self.class_name}")
+        with open(DataConfig.processed_dogs, "rb") as f:
+            dog_targets = torch.tensor(pkl.load(f))
+        with open(DataConfig.processed_cats, "rb") as f:
+            cat_targets = torch.tensor(pkl.load(f))
 
-        print("Creating dataset...")
+        print("Preparing dataset...")
         val_transform = T.Resize(
             (DataConfig.compressed_height, DataConfig.compressed_width)
         )
-        values = val_transform(targets)
+        dog_transformed = val_transform(dog_targets)
+        cat_transformed = val_transform(cat_targets)
 
-        data = list(zip(values, targets))
-        self.train_data = ImageDataset(data[: int(len(data) * DataConfig.split_ration)])
-        self.val_data = ImageDataset(data[int(len(data) * DataConfig.split_ration) :])
+        dog_data = list(zip(dog_transformed, dog_targets))
+        cat_data = list(zip(cat_transformed, cat_targets))
+
+        dog_train = dog_data[: int(len(dog_data) * DataConfig.split_ration)]
+        dog_val = dog_data[int(len(dog_data) * DataConfig.split_ration) :]
+        cat_train = cat_data[: int(len(cat_data) * DataConfig.split_ration)]
+        cat_val = cat_data[int(len(cat_data) * DataConfig.split_ration) :]
+
+        if self.train_class is DataClass.DOG:
+            self.train_data = ImageDataset(dog_train)
+        elif self.train_class is DataClass.CAT:
+            self.train_data = ImageDataset(cat_train)
+        elif self.train_class is DataClass.MIX:
+            self.train_data = ImageDataset(dog_train + cat_train)
+
+        if self.val_class is DataClass.DOG:
+            self.val_data = ImageDataset(dog_val)
+        elif self.val_class is DataClass.CAT:
+            self.val_data = ImageDataset(cat_val)
+        elif self.val_class is DataClass.MIX:
+            self.val_data = ImageDataset(dog_val + cat_val)
+
+        print("Done.")
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
