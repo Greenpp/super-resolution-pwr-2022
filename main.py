@@ -8,11 +8,31 @@ from super_resolution.model import SRScalingModel
 
 
 @click.command()
-@click.option("-t", "--train-class", type=click.Choice(["dog", "cat", "mix"]))
-@click.option("-b", "--batch-size", type=int, default=TrainingConfig.batch_size)
-@click.option("-lr", "--learning-rate", type=float, default=TrainingConfig.lr)
-@click.option("--test", is_flag=True)
-def main(train_class: str, batch_size: int, learning_rate: float, test: bool) -> None:
+@click.option(
+    "-t",
+    "--train-class",
+    type=click.Choice(["dog", "cat", "mix"]),
+    help="Train on dogs, cats or both?",
+)
+@click.option("-n", "--name", type=str, help="Name of the experiment on wandb.")
+@click.option(
+    "-b",
+    "--batch-size",
+    type=int,
+    default=TrainingConfig.batch_size,
+    help="Batch size.",
+)
+@click.option(
+    "-lr",
+    "--learning-rate",
+    type=float,
+    default=TrainingConfig.lr,
+    help="Learning rate.",
+)
+@click.option("--test", is_flag=True, help="Test run with 1 batch only.")
+def main(
+    train_class: str, name: str, batch_size: int, learning_rate: float, test: bool
+) -> None:
     pl.seed_everything(RANDOM_SEED)
 
     if train_class == "dog":
@@ -26,7 +46,7 @@ def main(train_class: str, batch_size: int, learning_rate: float, test: bool) ->
 
     logger = WandbLogger(
         project="super-resolution-pwr-2022",
-        name="new_model",
+        name=name,
     )
     trainer = pl.Trainer(
         gpus=1,
