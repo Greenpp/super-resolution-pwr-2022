@@ -1,4 +1,3 @@
-import pickle as pkl
 from pathlib import Path
 
 import numpy as np
@@ -51,6 +50,12 @@ def equalize_sets(*data_sets: list[np.ndarray]) -> list[list[np.ndarray]]:
     return [data_set[:min_len] for data_set in data_sets]
 
 
+def save_images(images: list[np.ndarray], path: Path) -> None:
+    """Save images to a file."""
+    for i, img in tqdm(enumerate(images), desc="Saving images", total=len(images)):
+        Image.fromarray(img.transpose(1, 2, 0)).save(path / f"{i}.jpg")
+
+
 def process_paths(paths: list[Path]) -> list[np.ndarray]:
     """Load, filter and process images."""
     images = []
@@ -72,8 +77,8 @@ def process_paths(paths: list[Path]) -> list[np.ndarray]:
 
 def main() -> None:
     """Load images, filter out too small images, scale and save rest."""
-    cat_paths = load_paths(Path("data/unpacked/Cat"))
-    dog_paths = load_paths(Path("data/unpacked/Dog"))
+    cat_paths = load_paths(Path(DataConfig.unpacked_cats))
+    dog_paths = load_paths(Path(DataConfig.unpacked_dogs))
     print(f"Got {len(cat_paths)} cat paths and {len(dog_paths)} dog paths.")
 
     print("Processing cat images...")
@@ -88,10 +93,13 @@ def main() -> None:
         f"Equalized to {len(equalized_cats)} cat images and {len(equalized_dogs)} dog images."
     )
 
-    with open(DataConfig.processed_cats, "wb") as f:
-        pkl.dump(np.stack(equalized_cats), f)
-    with open(DataConfig.processed_dogs, "wb") as f:
-        pkl.dump(np.stack(equalized_dogs), f)
+    output_cats = Path(DataConfig.processed_cats)
+    output_cats.mkdir(parents=True, exist_ok=True)
+    output_dogs = Path(DataConfig.processed_dogs)
+    output_dogs.mkdir(parents=True, exist_ok=True)
+
+    save_images(equalized_cats, output_cats)
+    save_images(equalized_dogs, output_dogs)
 
 
 if __name__ == "__main__":

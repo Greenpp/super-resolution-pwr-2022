@@ -14,9 +14,41 @@ stages:
     deps:
       - ${DataConfig.unpacked_data}
     outs:
-      - ${DataConfig.processed_cats}
-      - ${DataConfig.processed_dogs}
+      - ${DataConfig.processed_cats}:
+          cache: false
+      - ${DataConfig.processed_dogs}:
+          cache: false
     params:
       - super_resolution/config.py:
           - DataConfig.target_width
           - DataConfig.target_height
+  scale:
+    cmd: python -m super_resolution.preprocessing.scale
+    deps:
+      - ${DataConfig.processed_dogs}
+      - ${DataConfig.processed_cats}
+    outs:
+      - ${DataConfig.scaled_dogs}:
+          cache: false
+      - ${DataConfig.scaled_cats}:
+          cache: false
+    params:
+      - super_resolution/config.py:
+          - DataConfig.compressed_width
+          - DataConfig.compressed_height
+
+  label:
+    cmd: python -m super_resolution.preprocessing.label
+    deps:
+      - ${DataConfig.processed_dogs}
+      - ${DataConfig.processed_cats}
+      - ${DataConfig.scaled_dogs}
+      - ${DataConfig.scaled_cats}
+    outs:
+      - ${DataConfig.train_dogs}
+      - ${DataConfig.train_cats}
+      - ${DataConfig.val_dogs}
+      - ${DataConfig.val_cats}
+    params:
+      - super_resolution/config.py:
+          - DataConfig.split_ratio

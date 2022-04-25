@@ -23,9 +23,70 @@ stages:
         DataConfig.target_height: 320
         DataConfig.target_width: 240
     outs:
-    - path: data/processed_cats.pkl
-      md5: 46ce78795e021f3445413c85f7daf79c
-      size: 2047104168
-    - path: data/processed_dogs.pkl
-      md5: 4faf606984b04c6a72d2b22e3508dd89
-      size: 2047104168
+    - path: data/processed/Cat
+      md5: 8375184ba6cb45efbaa4483504c4d874.dir
+      size: 105907568
+      nfiles: 8885
+    - path: data/processed/Dog
+      md5: 97188257765cd07b10adc55d6672b8c6.dir
+      size: 122732115
+      nfiles: 8885
+  scale:
+    cmd: python -m super_resolution.preprocessing.scale
+    deps:
+    - path: data/processed/Cat
+      md5: 8375184ba6cb45efbaa4483504c4d874.dir
+      size: 105907568
+      nfiles: 8885
+    - path: data/processed/Dog
+      md5: 97188257765cd07b10adc55d6672b8c6.dir
+      size: 122732115
+      nfiles: 8885
+    params:
+      super_resolution/config.py:
+        DataConfig.compressed_height: 40
+        DataConfig.compressed_width: 30
+    outs:
+    - path: data/scaled/Cat
+      md5: ca09a7caed650031b3a363ded49dfc13.dir
+      size: 8869174
+      nfiles: 8885
+    - path: data/scaled/Dog
+      md5: 5cd61075bf5b2c01e2fad263cb01d7f3.dir
+      size: 9101240
+      nfiles: 8885
+  label:
+    cmd: python -m super_resolution.preprocessing.label
+    deps:
+    - path: data/processed/Cat
+      md5: 8375184ba6cb45efbaa4483504c4d874.dir
+      size: 105907568
+      nfiles: 8885
+    - path: data/processed/Dog
+      md5: 97188257765cd07b10adc55d6672b8c6.dir
+      size: 122732115
+      nfiles: 8885
+    - path: data/scaled/Cat
+      md5: ca09a7caed650031b3a363ded49dfc13.dir
+      size: 8869174
+      nfiles: 8885
+    - path: data/scaled/Dog
+      md5: 5cd61075bf5b2c01e2fad263cb01d7f3.dir
+      size: 9101240
+      nfiles: 8885
+    params:
+      super_resolution/config.py:
+        DataConfig.split_ratio: 0.2
+    outs:
+    - path: data/cat_train.pkl
+      md5: a268d635f80d0f0c9a4237aea484a4af
+      size: 77344
+    - path: data/cat_val.pkl
+      md5: cd826969083dbe348f6751a291aade4e
+      size: 19338
+    - path: data/dog_train.pkl
+      md5: a268d635f80d0f0c9a4237aea484a4af
+      size: 77344
+    - path: data/dog_val.pkl
+      md5: cd826969083dbe348f6751a291aade4e
+      size: 19338

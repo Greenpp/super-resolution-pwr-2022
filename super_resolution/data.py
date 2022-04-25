@@ -1,23 +1,14 @@
 import enum
 import pickle as pkl
+from pathlib import Path
 
 import torch
+import torchvision.transforms as T
+from PIL import Image
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms as T
 
 from .config import DataConfig, TrainingConfig
-
-
-class ImageDataset(Dataset):
-    def __init__(self, data: list[tuple[torch.Tensor, torch.Tensor]]) -> None:
-        self.data = data
-
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.data[index]
-
-    def __len__(self) -> int:
-        return len(self.data)
 
 
 class DataClass(enum.Enum):
@@ -26,54 +17,75 @@ class DataClass(enum.Enum):
     MIX = enum.auto()
 
 
+class ImageDataset(Dataset):
+    def __init__(self, data: list[list[Path]]) -> None:
+        self.data = data
+        self.transform = T.ToTensor()
+
+    def __getitem__(self, index: int) -> list[torch.Tensor]:
+        paths = self.data[index]
+        imgs = [Image.open(path) for path in paths]
+        tensors = [self.transform(img) for img in imgs]
+
+        return tensors
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
 class ImageModule(LightningDataModule):
-    def __init__(self, train_class: DataClass, val_class: DataClass) -> None:
+    def __init__(self, train_class: DataClass, batch_size: int) -> None:
         super().__init__()
         self.train_class = train_class
-        self.val_class = val_class
+        self.batch_size = batch_size
+
+    def _load_paths(
+        self, names_file: str, base_dir: str, scaled_dir: str
+    ) -> list[list[Path]]:
+        base_path = Path(base_dir)
+        scaled_path = Path(scaled_dir)
+
+        with open(names_file, "rb") as f:
+            names = pkl.load(f)
+
+        paths = [[scaled_path / name, base_path / name] for name in names]
+
+        return paths
 
     def prepare_data(self):
-        print("Loading data...")
-        with open(DataConfig.processed_dogs, "rb") as f:
-            dog_targets = torch.tensor(pkl.load(f))
-        with open(DataConfig.processed_cats, "rb") as f:
-            cat_targets = torch.tensor(pkl.load(f))
+        train_paths: list[list[Path]] = []
+        if self.train_class is DataClass.DOG or self.train_class is DataClass.MIX:
+            paths = self._load_paths(
+                DataConfig.train_dogs,
+                DataConfig.processed_dogs,
+                DataConfig.scaled_dogs,
+            )
+            train_paths.extend(paths)
+        if self.train_class is DataClass.CAT or self.train_class is DataClass.MIX:
+            paths = self._load_paths(
+                DataConfig.train_cats,
+                DataConfig.processed_cats,
+                DataConfig.scaled_cats,
+            )
+            train_paths.extend(paths)
 
-        print("Preparing dataset...")
-        val_transform = T.Resize(
-            (DataConfig.compressed_height, DataConfig.compressed_width)
+        dog_val_paths = self._load_paths(
+            DataConfig.val_dogs, DataConfig.processed_dogs, DataConfig.scaled_dogs
         )
-        dog_transformed = val_transform(dog_targets)
-        cat_transformed = val_transform(cat_targets)
+        cat_val_paths = self._load_paths(
+            DataConfig.val_cats, DataConfig.processed_cats, DataConfig.scaled_cats
+        )
+        val_paths: list[list[Path]] = []
+        for d, c in zip(dog_val_paths, cat_val_paths):
+            val_paths.append([*d, *c])
 
-        dog_data = list(zip(dog_transformed, dog_targets))
-        cat_data = list(zip(cat_transformed, cat_targets))
-
-        dog_train = dog_data[: int(len(dog_data) * DataConfig.split_ration)]
-        dog_val = dog_data[int(len(dog_data) * DataConfig.split_ration) :]
-        cat_train = cat_data[: int(len(cat_data) * DataConfig.split_ration)]
-        cat_val = cat_data[int(len(cat_data) * DataConfig.split_ration) :]
-
-        if self.train_class is DataClass.DOG:
-            self.train_data = ImageDataset(dog_train)
-        elif self.train_class is DataClass.CAT:
-            self.train_data = ImageDataset(cat_train)
-        elif self.train_class is DataClass.MIX:
-            self.train_data = ImageDataset(dog_train + cat_train)
-
-        if self.val_class is DataClass.DOG:
-            self.val_data = ImageDataset(dog_val)
-        elif self.val_class is DataClass.CAT:
-            self.val_data = ImageDataset(cat_val)
-        elif self.val_class is DataClass.MIX:
-            self.val_data = ImageDataset(dog_val + cat_val)
-
-        print("Done.")
+        self.train_data = ImageDataset(train_paths)
+        self.val_data = ImageDataset(val_paths)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self.train_data,
-            batch_size=TrainingConfig.batch_size,
+            batch_size=self.batch_size,
             num_workers=TrainingConfig.num_workers,
             shuffle=True,
         )
@@ -81,6 +93,6 @@ class ImageModule(LightningDataModule):
     def val_dataloader(self) -> DataLoader:
         return DataLoader(
             self.val_data,
-            batch_size=TrainingConfig.batch_size,
+            batch_size=self.batch_size,
             num_workers=TrainingConfig.num_workers,
         )

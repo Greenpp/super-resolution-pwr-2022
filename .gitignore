@@ -153,3 +153,4 @@ cython_debug/
 
 .vscode
 lightning_logs
+wandb

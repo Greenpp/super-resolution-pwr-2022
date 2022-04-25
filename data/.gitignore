@@ -1,5 +1,8 @@
 /raw.tar.gz
-/unpacked
-/processed.pkl
-/processed_cats.pkl
-/processed_dogs.pkl
+unpacked
+processed
+scaled
+/dog_train.pkl
+/cat_train.pkl
+/dog_val.pkl
+/cat_val.pkl
