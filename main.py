@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import click
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -14,7 +16,9 @@ from super_resolution.model import SRScalingModel
     type=click.Choice(["dog", "cat", "mix"]),
     help="Train on dogs, cats or both?",
 )
-@click.option("-n", "--name", type=str, help="Name of the experiment on wandb.")
+@click.option(
+    "-n", "--name", type=str, help="Name of the experiment on wandb.", default=None
+)
 @click.option(
     "-b",
     "--batch-size",
@@ -29,11 +33,17 @@ from super_resolution.model import SRScalingModel
     default=TrainingConfig.lr,
     help="Learning rate.",
 )
+@click.option("-r", "--random-seed", type=int, default=RANDOM_SEED, help="Random seed.")
 @click.option("--test", is_flag=True, help="Test run with 1 batch only.")
 def main(
-    train_class: str, name: str, batch_size: int, learning_rate: float, test: bool
+    train_class: str,
+    name: str | None,
+    batch_size: int,
+    learning_rate: float,
+    random_seed: int,
+    test: bool,
 ) -> None:
-    pl.seed_everything(RANDOM_SEED)
+    pl.seed_everything(random_seed)
 
     if train_class == "dog":
         tc = DataClass.DOG

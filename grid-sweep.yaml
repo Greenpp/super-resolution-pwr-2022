@@ -1,0 +1,13 @@
+program: main.py
+name: 5x experiment dog cat mix
+method: grid
+parameters:
+  train-class:
+    values: ["dog", "cat", "mix"]
+  random-seed:
+    values: [42, 100, 300, 253, 82294]
+command:
+  - ${env}
+  - poetry run python
+  - ${program}
+  - ${args}
