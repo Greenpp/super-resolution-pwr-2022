@@ -20,6 +20,8 @@ class SRScalingModel(pl.LightningModule):
     def __init__(self, learning_rate: float) -> None:
         super().__init__()
 
+        self.save_hyperparameters()
+
         self.lr = learning_rate
         self.model = nn.Sequential(
             nn.Conv2d(3, 128, kernel_size=3, stride=1, padding=1),
