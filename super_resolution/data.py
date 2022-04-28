@@ -1,5 +1,6 @@
 import enum
 import pickle as pkl
+import random
 from pathlib import Path
 
 import torch
@@ -54,20 +55,38 @@ class ImageModule(LightningDataModule):
 
     def prepare_data(self):
         train_paths: list[list[Path]] = []
-        if self.train_class is DataClass.DOG or self.train_class is DataClass.MIX:
+        if self.train_class is DataClass.DOG:
             paths = self._load_paths(
                 DataConfig.train_dogs,
                 DataConfig.processed_dogs,
                 DataConfig.scaled_dogs,
             )
             train_paths.extend(paths)
-        if self.train_class is DataClass.CAT or self.train_class is DataClass.MIX:
+        elif self.train_class is DataClass.CAT:
             paths = self._load_paths(
                 DataConfig.train_cats,
                 DataConfig.processed_cats,
                 DataConfig.scaled_cats,
             )
             train_paths.extend(paths)
+        elif self.train_class is DataClass.MIX:
+            cat_paths = self._load_paths(
+                DataConfig.train_cats,
+                DataConfig.processed_cats,
+                DataConfig.scaled_cats,
+            )
+            dog_paths = self._load_paths(
+                DataConfig.train_dogs,
+                DataConfig.processed_dogs,
+                DataConfig.scaled_dogs,
+            )
+            random.shuffle(cat_paths)
+            random.shuffle(dog_paths)
+
+            mixed_paths = (
+                cat_paths[: len(cat_paths) // 2] + dog_paths[: len(dog_paths) // 2]
+            )
+            train_paths.extend(mixed_paths)
 
         dog_val_paths = self._load_paths(
             DataConfig.val_dogs, DataConfig.processed_dogs, DataConfig.scaled_dogs
