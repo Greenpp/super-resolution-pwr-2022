@@ -1,10 +1,19 @@
+import logging
+from pathlib import Path
 from typing import Iterable
 
+import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics
+
+import wandb
+
+from .config import DataConfig
+
+logging.getLogger("matplotlib").setLevel(level=logging.ERROR)
 
 
 class SREnhancingModel(pl.LightningModule):
@@ -17,23 +26,34 @@ class SREnhancingModel(pl.LightningModule):
 class SRScalingModel(pl.LightningModule):
     """Super-resolution model scaling images to a given resolution."""
 
-    def __init__(self, learning_rate: float) -> None:
+    def __init__(
+        self, learning_rate: float, example_cat: str, example_dog: str
+    ) -> None:
         super().__init__()
 
         self.save_hyperparameters()
 
         self.lr = learning_rate
+
+        example_original_cat_file = Path(DataConfig.processed_cats) / example_cat
+        example_scaled_cat_file = Path(DataConfig.scaled_cats) / example_cat
+        self.example_original_cat = plt.imread(str(example_original_cat_file))
+        self.example_scaled_cat = plt.imread(str(example_scaled_cat_file))
+
+        example_original_dog_file = Path(DataConfig.processed_dogs) / example_dog
+        example_scaled_dog_file = Path(DataConfig.scaled_dogs) / example_dog
+        self.example_original_dog = plt.imread(str(example_original_dog_file))
+        self.example_scaled_dog = plt.imread(str(example_scaled_dog_file))
+
         self.model = nn.Sequential(
             nn.Conv2d(3, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
             nn.PixelShuffle(2),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.PixelShuffle(2),
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.PixelShuffle(2),
-            nn.ReLU(),
-            nn.Conv2d(8, 3, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),
         )
 
         metrics = torchmetrics.MetricCollection(
@@ -45,6 +65,8 @@ class SRScalingModel(pl.LightningModule):
         self.training_metrics = metrics.clone("train_")
         self.val_dog_metrics = metrics.clone("val_dog_")
         self.val_cat_metrics = metrics.clone("val_cat_")
+
+        self._log_restoration()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
@@ -86,6 +108,49 @@ class SRScalingModel(pl.LightningModule):
 
         self.log("val_dog_loss", loss_dog, on_step=True, prog_bar=True, on_epoch=True)
         self.log("val_cat_loss", loss_cat, on_step=True, prog_bar=True, on_epoch=True)
+
+    def on_validation_end(self) -> None:
+        self._log_restoration()
+
+    def _log_restoration(self) -> None:
+        scaled_img_tensor = (
+            torch.stack(
+                [
+                    torch.tensor(self.example_scaled_cat).permute(2, 0, 1),
+                    torch.tensor(self.example_scaled_dog).permute(2, 0, 1),
+                ]
+            )
+            .float()
+            .to(self.device)
+            / 255.0
+        )
+        with torch.no_grad():
+            restored_img = self(scaled_img_tensor).detach().cpu().numpy()
+
+        restored_cat = restored_img[0].transpose(1, 2, 0)
+        restored_dog = restored_img[1].transpose(1, 2, 0)
+
+        plt.figure(figsize=(10, 10))
+        plt.subplot(2, 3, 1)
+        plt.imshow(self.example_original_cat)
+        plt.title("Original cat")
+        plt.subplot(2, 3, 2)
+        plt.imshow(self.example_scaled_cat)
+        plt.title("Scaled cat")
+        plt.subplot(2, 3, 3)
+        plt.imshow(restored_cat)
+        plt.title("Restored cat")
+        plt.subplot(2, 3, 4)
+        plt.imshow(self.example_original_dog)
+        plt.title("Original dog")
+        plt.subplot(2, 3, 5)
+        plt.imshow(self.example_scaled_dog)
+        plt.title("Scaled dog")
+        plt.subplot(2, 3, 6)
+        plt.imshow(restored_dog)
+        plt.title("Restored dog")
+
+        wandb.log({"Restoration": plt})
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)

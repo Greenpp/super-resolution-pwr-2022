@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pickle as pkl
+
 import click
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -15,6 +17,7 @@ from super_resolution.model import SRScalingModel
     "--train-class",
     type=click.Choice(["dog", "cat", "mix"]),
     help="Train on dogs, cats or both?",
+    default="mix",
 )
 @click.option(
     "-n", "--name", type=str, help="Name of the experiment on wandb.", default=None
@@ -65,7 +68,10 @@ def main(
         fast_dev_run=test,
     )
     data_module = ImageModule(tc, batch_size)
-    model = SRScalingModel(learning_rate)
+
+    with open("data/cat_val.pkl", "rb") as f:
+        names = pkl.load(f)
+    model = SRScalingModel(learning_rate, names[0], names[0])
 
     trainer.fit(model, data_module)
 

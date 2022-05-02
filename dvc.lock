@@ -44,16 +44,16 @@ stages:
       nfiles: 8885
     params:
       super_resolution/config.py:
-        DataConfig.compressed_height: 40
-        DataConfig.compressed_width: 30
+        DataConfig.compressed_height: 160
+        DataConfig.compressed_width: 120
     outs:
     - path: data/scaled/Cat
-      md5: ca09a7caed650031b3a363ded49dfc13.dir
-      size: 8869174
+      md5: 4c5d8c014289d8e7e1b38424ab8206ab.dir
+      size: 36828102
       nfiles: 8885
     - path: data/scaled/Dog
-      md5: 5cd61075bf5b2c01e2fad263cb01d7f3.dir
-      size: 9101240
+      md5: 359db23efc4aa099c486eeb7153db834.dir
+      size: 41224335
       nfiles: 8885
   label:
     cmd: python -m super_resolution.preprocessing.label
@@ -67,12 +67,12 @@ stages:
       size: 122732115
       nfiles: 8885
     - path: data/scaled/Cat
-      md5: ca09a7caed650031b3a363ded49dfc13.dir
-      size: 8869174
+      md5: 4c5d8c014289d8e7e1b38424ab8206ab.dir
+      size: 36828102
       nfiles: 8885
     - path: data/scaled/Dog
-      md5: 5cd61075bf5b2c01e2fad263cb01d7f3.dir
-      size: 9101240
+      md5: 359db23efc4aa099c486eeb7153db834.dir
+      size: 41224335
       nfiles: 8885
     params:
       super_resolution/config.py:

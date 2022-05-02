@@ -24,8 +24,8 @@ class DataConfig:
     target_height = 320
 
     split_ratio = 0.2
-    compressed_width = 30
-    compressed_height = 40
+    compressed_width = 120
+    compressed_height = 160
 
 
 class TrainingConfig:
@@ -33,3 +33,6 @@ class TrainingConfig:
     num_workers = 4
     max_epochs = 50
     lr = 0.0001
+
+    example_cat = "8.jpg"
+    example_dog = "8.jpg"
