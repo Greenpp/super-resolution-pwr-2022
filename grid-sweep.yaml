@@ -1,5 +1,5 @@
 program: main.py
-name: 5x experiment dog cat mix
+name: scale x2
 method: grid
 parameters:
   train-class:
