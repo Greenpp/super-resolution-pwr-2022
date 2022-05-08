@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics
+from ISR.models import RDN
 
 import wandb
 
@@ -65,6 +66,10 @@ class SRScalingModel(pl.LightningModule):
         self.training_metrics = metrics.clone("train_")
         self.val_dog_metrics = metrics.clone("val_dog_")
         self.val_cat_metrics = metrics.clone("val_cat_")
+
+        self.rdn = RDN(weights='psnr-small')
+        self.rdn_cat_prediction = self.rdn.predict(self.example_scaled_cat)
+        self.rdn_dog_prediction = self.rdn.predict(self.example_scaled_dog)
 
         self._log_restoration()
 
@@ -130,25 +135,31 @@ class SRScalingModel(pl.LightningModule):
         restored_cat = restored_img[0].transpose(1, 2, 0)
         restored_dog = restored_img[1].transpose(1, 2, 0)
 
-        plt.figure(figsize=(10, 10))
-        plt.subplot(2, 3, 1)
+        plt.figure(figsize=(12, 12))
+        plt.subplot(2, 4, 1)
         plt.imshow(self.example_original_cat)
         plt.title("Original cat")
-        plt.subplot(2, 3, 2)
+        plt.subplot(2, 4, 2)
         plt.imshow(self.example_scaled_cat)
         plt.title("Scaled cat")
-        plt.subplot(2, 3, 3)
+        plt.subplot(2, 4, 3)
         plt.imshow(restored_cat)
         plt.title("Restored cat")
-        plt.subplot(2, 3, 4)
+        plt.subplot(2, 4, 4)
+        plt.imshow(self.rdn_cat_prediction)
+        plt.title("RDN Restored cat")
+        plt.subplot(2, 4, 5)
         plt.imshow(self.example_original_dog)
         plt.title("Original dog")
-        plt.subplot(2, 3, 5)
+        plt.subplot(2, 4, 6)
         plt.imshow(self.example_scaled_dog)
         plt.title("Scaled dog")
-        plt.subplot(2, 3, 6)
+        plt.subplot(2, 4, 7)
         plt.imshow(restored_dog)
         plt.title("Restored dog")
+        plt.subplot(2, 4, 8)
+        plt.imshow(self.rdn_dog_prediction)
+        plt.title("RDN Restored dog")
 
         wandb.log({"Restoration": plt})
 
