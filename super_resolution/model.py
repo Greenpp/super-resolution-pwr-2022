@@ -8,7 +8,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics
-from ISR.models import RDN
 
 import wandb
 
@@ -67,9 +66,8 @@ class SRScalingModel(pl.LightningModule):
         self.val_dog_metrics = metrics.clone("val_dog_")
         self.val_cat_metrics = metrics.clone("val_cat_")
 
-        self.rdn = RDN(weights='psnr-small')
-        self.rdn_cat_prediction = self.rdn.predict(self.example_scaled_cat)
-        self.rdn_dog_prediction = self.rdn.predict(self.example_scaled_dog)
+        self.rdn_cat_prediction = plt.imread("rdn_cat.png")
+        self.rdn_dog_prediction = plt.imread("rdn_dog.png")
 
         self._log_restoration()
 
